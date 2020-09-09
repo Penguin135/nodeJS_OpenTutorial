@@ -6,7 +6,7 @@ var app = http.createServer(function (request, response) {
   var _url = request.url;
   var queryData = url.parse(request.url, true).query;
   var pathname = url.parse(_url, true).pathname;
-
+  console.log(pathname);
   // 루트 디렉토리 (/)로부터 존재하는 페이지를 요청하면 페이지 표시
   if (pathname === '/') {
     fs.readFile('data/' + queryData.id, 'utf8', function (err, description) {
@@ -32,8 +32,9 @@ var app = http.createServer(function (request, response) {
           <meta charset="utf-8">
         </head>
         <body>
-          <h1><a href="/">WEB</a></h1>
+          <h1><a href="/">WEB2</a></h1>
           ${list}
+          <a href="/create">create<a>
           <h2>${title}</h2>
           <p>
             ${description}

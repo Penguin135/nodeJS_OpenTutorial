@@ -1,6 +1,6 @@
 var template = {
-    html : function (title, list, body, control) {
-        return `
+  html: function (title, list, body, control) {
+    return `
         <!doctype html>
     <html>
     <head>
@@ -18,13 +18,28 @@ var template = {
     </body>
     </html>
     `;
-    },
-    list : function (filelist) {
-        var list = '';
-        filelist.forEach((file) => {
-            list = list + `<li><a href="/?id=${file}">${file}</a></li>`;
-        });
-        return list;
-    }
+  },
+  list: function (topics) {
+    var list = '';
+    topics.forEach((topic) => {
+      list = list + `<li><a href="/?id=${topic.id}">${topic.title}</a></li>`;
+    });
+    return list;
+  },
+  author: function (authors, author_id) {
+    var tag = ``;
+    var selected = '';
+    authors.forEach(author => {
+      if (author_id === author.id) {
+        selected = ' selected';
+      }else{
+        selected = '';
+      }
+      tag = tag + `<option value="${author.id}" ${selected}>${author.name}</option>\n`;
+    });
+    return `<select name="author">
+                ${tag}
+              </select>`;
+  }
 }
 module.exports = template;

@@ -1,41 +1,46 @@
 const express = require('express')
 const app = express()
 const port = 80
-const topic = require('./lib/topic');
+var compression = require('compression')
+var bodyParser = require('body-parser');
+var pageRouter = require('./routes/page');
+var indexRouter = require('./routes/index');
+var authorRouter = require('./routes/author');
+var helmet = require('helmet')
+app.use(helmet());
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
+app.use('/page', pageRouter);
+app.use('/author', authorRouter);
+app.use('/',indexRouter);
 
-var db = require('./lib/db');
-var template = require('./lib/template');
 
-//get은 route, routing
-app.get('/', (req, res) => {
-    db.query('SELECT * FROM topic', function (error, topics) {
-        if (error) throw error;
-    
-        var description = 'Hello, Node.js';
-        var title = 'Welcome';
-        var list = template.list(topics);
-        var html = template.html(title, list, `<h2>${title}</h2>${description}`, `<a href="/create">create</a>`);
-        res.send(html);
-    });
-    
+// app.get('*', function (req, res, next) {
+//     db.query('SELECT * FROM topic', function (error, topics) {
+//         req.topics = topics;
+//         next();
+//     });
+
+// });
+
+
+
+
+
+
+
+app.use(function (req, res, next) {
+    res.status(404).send('Sorry cant find that!');
 });
 
-app.get('/create', (req, res)=>{
-    db.query('SELECT * FROM topic', function(error, topics){
-        var description = '';
-        var titole ='create';
-        var list = template.list(topics);
-        var html = template.html(title, list, )
-    });
-});
-
-app.get('/page/:pageId', (req, res) =>{
-    console.log(req.params);
-    res.send(req.params);
-});
+app.use(function (err, req, res, next) {
+    console.error(err.stack)
+    res.status(500).send('Something broke!');
+})
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Example app listening at http://localhost:${port}`)
 });
 
 // var http = require('http');

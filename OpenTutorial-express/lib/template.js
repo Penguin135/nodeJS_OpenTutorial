@@ -22,7 +22,7 @@ var template = {
   list: function (topics) {
     var list = '';
     topics.forEach((topic) => {
-      list = list + `<li><a href="/?id=${topic.id}">${topic.title}</a></li>`;
+      list = list + `<li><a href="/page/${topic.id}">${topic.title}</a></li>`;
     });
     return list;
   },

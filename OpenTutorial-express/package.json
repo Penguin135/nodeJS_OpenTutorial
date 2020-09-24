@@ -1,7 +1,6 @@
 {
   "name": "opentutorial-express",
   "version": "1.0.0",
-  "description": "",
   "main": "main.js",
   "directories": {
     "lib": "lib"
@@ -12,9 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
     "express": "^4.17.1",
+    "helmet": "^4.1.1",
     "mysql": "^2.18.1",
     "pm2": "^4.4.1",
     "sanitize-html": "^1.27.4"
-  }
+  },
+  "description": ""
 }

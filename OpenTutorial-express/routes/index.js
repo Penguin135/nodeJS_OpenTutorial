@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
+var auth = require('../lib/auth');
+
 
 //get은 route, routing
 router.get('/', (req, res) => {
@@ -11,8 +13,10 @@ router.get('/', (req, res) => {
         var title = 'Welcome';
         var list = template.list(topics);
 
-        var html = template.html(title, list, `<h2>${title}</h2>${description}
-        <img src="/image/profile.jpg" style="width:200px; display:block; margin-top:10px;">`, `<a href="/page/create">create</a>`);
+        var html = template.html(title, list, `<h2>${title}</h2>
+        ${description}
+        <img src="/image/profile.jpg" style="width:200px; display:block; margin-top:10px;">`, `<a href="/page/create">create</a>`,
+        auth.statusUI(req, res));
         res.send(html);
 
     });

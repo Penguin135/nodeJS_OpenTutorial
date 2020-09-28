@@ -2,6 +2,8 @@ var db = require('./db');
 var template = require('./template');
 var url = require('url');
 var qs = require('querystring');
+
+
 exports.home = function(){
     db.query('SELECT * FROM topic', function (error, topics) {
         if (error) throw error;

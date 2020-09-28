@@ -6,14 +6,30 @@ var bodyParser = require('body-parser');
 var pageRouter = require('./routes/page');
 var indexRouter = require('./routes/index');
 var authorRouter = require('./routes/author');
+var authRouter = require('./routes/auth');
 var helmet = require('helmet')
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+
+app.use(session({
+    secret: 'sknfienf123',
+    resave: false,
+    saveUninitialized: true,
+    store:new FileStore()
+}))
+
+
 app.use(helmet());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
+
+
 app.use('/page', pageRouter);
 app.use('/author', authorRouter);
+app.use('/auth', authRouter);
 app.use('/',indexRouter);
+
 
 
 // app.get('*', function (req, res, next) {
@@ -23,11 +39,6 @@ app.use('/',indexRouter);
 //     });
 
 // });
-
-
-
-
-
 
 
 app.use(function (req, res, next) {

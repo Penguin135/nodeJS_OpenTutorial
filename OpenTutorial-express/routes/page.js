@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
+var auth = require('../lib/auth');
+const { response } = require('express');
 
 router.get('/create', (req, res) => {
     db.query('SELECT * FROM topic', function (error, topics) {
@@ -29,7 +31,7 @@ router.get('/create', (req, res) => {
             </select>
         </p>
         <input type="submit" value="전송">
-    </form>${description}`, ``);
+    </form>${description}`, ``, auth.statusUI(req,res));
             res.send(html);
         });
 
@@ -38,6 +40,10 @@ router.get('/create', (req, res) => {
 
 
 router.post('/create_process', (req, res) => {
+    if(!auth.isOwner(req, res)){
+        res.redirect('/');
+        return false;
+    }
     var title = req.body.title;
     var description = req.body.description;
     var authorId = req.body.author;
@@ -48,6 +54,10 @@ router.post('/create_process', (req, res) => {
 });
 
 router.post('/delete_process', (req, res) => {
+    if(!auth.isOwner(req, res)){
+        res.redirect('/');
+        return false;
+    }
     db.query(`DELETE FROM topic WHERE topic.id = ?`, [req.body.id], (error, result) => {
         res.redirect('/');
     });
@@ -78,7 +88,7 @@ router.get('/update/:topicId', (req, res) => {
                 ${tag}
             <p>
             <input type="submit" value="수정">
-        </form>`, ``);
+        </form>`, ``,auth.statusUI(req,res));
                 res.send(html);
             });
         });
@@ -86,6 +96,10 @@ router.get('/update/:topicId', (req, res) => {
 });
 
 router.post('/update_process', (req, res) => {
+    if(!auth.isOwner(req, res)){
+        res.redirect('/');
+        return false;
+    }
     db.query('UPDATE topic SET title=?, description=?, author_id=? where topic.id = ?', [req.body.title, req.body.description, req.body.author, req.body.id], function (error1, result) {
         if (error1) throw error1;
         res.redirect(`/page/${req.body.id}`);
@@ -115,7 +129,7 @@ router.get('/:pageId', (req, res, next) => {
                 <form action="/page/delete_process" method="POST">
                     <input type="hidden" name="id" value="${topic[0].id}">
                     <input type="submit" value="삭제">
-                </form>`);
+                </form>`,`${auth.statusUI(req,res)}`);
                         res.send(html);
                     }
                 });

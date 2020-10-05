@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <article>
+
+    </article>
+    <input type="button" value="fetch" onclick="
+            // fetch('html').then(function(response){
+            //     response.text().then(function(text){
+            //         alert(text);
+            //         document.querySelector('article').innerHTML=text;
+            //     })
+            // })
+            fetch('html')
+  .then(function(response) {
+      var text = response.text();
+      text.then(function(des){
+          console.log(des);
+      })
+      //console.log(text);
+
+  });
+            
+        ">
+</body>
+
+</html>

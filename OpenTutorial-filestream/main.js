@@ -9,6 +9,7 @@ var cookie = require('cookie');
 //정리용 함수
 
 
+
 function authIsOwner(request, response){
     var isOwner = false;
 

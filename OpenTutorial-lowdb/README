@@ -1,0 +1,4 @@
+nodejs에서 lowdb의 간단한 CRUD 실습
+
+lowdb https://github.com/typicode/lowdb
+shortid https://www.npmjs.com/package/shortid

@@ -3,34 +3,70 @@ var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
 
-
-router.get('/login', (req, res) => {
-    db.query('SELECT * FROM topic', function (error, topics) {
-        if (error) throw error;
-        var fmsg = req.flash();
-        var message='';
-        if(fmsg.message){
-            message=fmsg.message;
-        }
-        var title = 'Login';
-        var description = '';
-        var list = template.list(topics);
-                var html = template.html(title, list, `<h2>${title}</h2>
-                <p>
-                    ${message}
-                </p>
-                <form action="/auth/login_process" method='POST'>
+module.exports=function(passport){
+    router.get('/login', (req, res) => {
+        db.query('SELECT * FROM topic', function (error, topics) {
+            if (error) throw error;
+            var fmsg = req.flash();
+            var message='';
+            if(fmsg.message){
+                message=fmsg.message;
+            }
+            var title = 'Login';
+            var description = '';
+            var list = template.list(topics);
+                    var html = template.html(title, list, `<h2>${title}</h2>
                     <p>
-                        <input type="text" name="email" placeholder="email">
+                        ${message}
                     </p>
-                    <p>
-                        <input type="password" name="pwd" placeholder="password">
-                    </p>
-                    <input type="submit" value="로그인">
-                </form>${description}`, ``);
-        res.send(html);
+                    <form action="/auth/login_process" method='POST'>
+                        <p>
+                            <input type="text" name="email" placeholder="email">
+                        </p>
+                        <p>
+                            <input type="password" name="pwd" placeholder="password">
+                        </p>
+                        <input type="submit" value="로그인">
+                    </form>${description}`, ``);
+            res.send(html);
+        });
     });
-});
+
+    router.post('/login_process', function (req, res, next) {
+        passport.authenticate('local', function (err, user, info) {
+            if (err) {
+                return next(err);
+            }
+            if (!user) {
+                req.session.save(function () {
+                    req.flash('message', info.message);
+                    return req.session.save(function () {
+                        res.redirect('/auth/login');
+                    });
+                });
+            }
+            req.logIn(user, function (err) {
+                if (err) { return next(err); }
+                req.session.save(function () {
+                    res.redirect('/');
+                    return;
+                });
+            });
+        })(req, res, next);
+    });
+    
+    router.get('/logout', (req,res)=>{
+        req.logOut();
+        req.session.save(function(err){
+            if(err) throw err;
+            res.redirect('/');
+        })
+    })
+    return router;
+}
+
+//module.exports = router;
+
 
 // router.post('/login_process', (req, res)=>{
 //     if(req.body.email == authData.email && req.body.pwd == authData.password){
@@ -47,13 +83,7 @@ router.get('/login', (req, res) => {
 //     }
 // })
 
-router.get('/logout', (req,res)=>{
-    req.logOut();
-    req.session.save(function(err){
-        if(err) throw err;
-        res.redirect('/');
-    })
-})
+
 // router.get('/create', (req, res) => {
 //     db.query('SELECT * FROM topic', function (error, topics) {
 //         if (error) throw error;
@@ -180,4 +210,3 @@ router.get('/logout', (req,res)=>{
 //     });
 // });
 
-module.exports = router;

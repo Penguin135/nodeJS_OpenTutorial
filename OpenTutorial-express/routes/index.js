@@ -7,7 +7,6 @@ var auth = require('../lib/auth');
 
 //get은 route, routing
 router.get('/', (req, res) => {
-    console.log('main', req.user);
     db.query('SELECT * FROM topic', function (error, topics) {
         //console.log('/', req.user);
         if (error) throw error;

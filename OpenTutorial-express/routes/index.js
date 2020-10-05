@@ -7,7 +7,9 @@ var auth = require('../lib/auth');
 
 //get은 route, routing
 router.get('/', (req, res) => {
+    console.log('main', req.user);
     db.query('SELECT * FROM topic', function (error, topics) {
+        //console.log('/', req.user);
         if (error) throw error;
         var description = 'Hello, Node.js';
         var title = 'Welcome';
@@ -15,7 +17,7 @@ router.get('/', (req, res) => {
 
         var html = template.html(title, list, `<h2>${title}</h2>
         ${description}
-        <img src="/image/profile.jpg" style="width:200px; display:block; margin-top:10px;">`, `<a href="/page/create">create</a>`,
+        `, `<a href="/page/create">create</a>`,
         auth.statusUI(req, res));
         res.send(html);
 

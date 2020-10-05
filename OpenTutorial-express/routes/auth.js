@@ -1,24 +1,24 @@
-const { response } = require('express');
 var express = require('express');
 var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
 
 
-
-var authData = {
-    email:'rudwns273@naver.com',
-    password:'111111',
-    nickname:'rudwns273'
-}
-
 router.get('/login', (req, res) => {
     db.query('SELECT * FROM topic', function (error, topics) {
         if (error) throw error;
+        var fmsg = req.flash();
+        var message='';
+        if(fmsg.message){
+            message=fmsg.message;
+        }
         var title = 'Login';
         var description = '';
         var list = template.list(topics);
                 var html = template.html(title, list, `<h2>${title}</h2>
+                <p>
+                    ${message}
+                </p>
                 <form action="/auth/login_process" method='POST'>
                     <p>
                         <input type="text" name="email" placeholder="email">
@@ -32,23 +32,24 @@ router.get('/login', (req, res) => {
     });
 });
 
-router.post('/login_process', (req, res)=>{
-    if(req.body.email == authData.email && req.body.pwd == authData.password){
-        console.log(req.session);
-        req.session.is_logined = true;
-        req.session.nickname = authData.nickname;
-        req.session.save(function(){
-            res.redirect('/');
-        });
+// router.post('/login_process', (req, res)=>{
+//     if(req.body.email == authData.email && req.body.pwd == authData.password){
+//         console.log(req.session);
+//         req.session.is_logined = true;
+//         req.session.nickname = authData.nickname;
+//         req.session.save(function(){
+//             res.redirect('/');
+//         });
         
         
-    }else{
-        res.send('login failed');
-    }
-})
+//     }else{
+//         res.send('login failed');
+//     }
+// })
 
 router.get('/logout', (req,res)=>{
-    req.session.destroy(function(err){
+    req.logOut();
+    req.session.save(function(err){
         if(err) throw err;
         res.redirect('/');
     })

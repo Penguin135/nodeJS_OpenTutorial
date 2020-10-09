@@ -3,22 +3,17 @@ var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
 var auth = require('../lib/auth');
-const { response } = require('express');
+var shortId = require('shortid');
+const { request } = require('express');
 
 router.get('/create', (req, res) => {
-    db.query('SELECT * FROM topic', function (error, topics) {
-        if (error) throw error;
-        db.query('SELECT * FROM author', function (error2, authors) {
-            if (error2) throw error2;
-            var title = 'Create';
-            var description = '';
-            var list = template.list(topics);
-            var authorOptions = '';
+    console.log(req.user);
+    var title = 'Create';
+    var description = '';
+    var topics = db.get('topics').value();
+    var list = template.list(topics);
 
-            authors.forEach((author) => {
-                authorOptions += `<option value = ${author.id}>${author.name}</option>`;
-            });
-            var html = template.html(title, list, `<h2>${title}</h2><form action="/page/create_process" method='POST'>
+    var html = template.html(title, list, `<h2>${title}</h2><form action="/page/create_process" method='POST'>
         <p>
            <input type="text" name="title" placeholder="title">
         </p>
@@ -26,16 +21,11 @@ router.get('/create', (req, res) => {
             <textarea name="description" placeholder="description"></textarea>
         </p>
         <p>
-            <select name="author">
-                ${authorOptions};
-            </select>
+            <input type="hidden" name="author" value=${req.user.id}></input>
         </p>
         <input type="submit" value="전송">
-    </form>${description}`, ``, auth.statusUI(req,res));
-            res.send(html);
-        });
-
-    });
+    </form>${description}`, ``, auth.statusUI(req, res));
+    res.send(html);
 });
 
 
@@ -44,13 +34,18 @@ router.post('/create_process', (req, res) => {
         res.redirect('/');
         return false;
     }
+    console.log(req.body);
     var title = req.body.title;
     var description = req.body.description;
     var authorId = req.body.author;
-    db.query(`INSERT INTO topic (title, description, created, author_id) values (?, ?, now(), ?);`, [title, description, authorId], function (error, result) {
-        if (error) throw error;
-        res.redirect(`/page/${result.insertId}`);
-    });
+    var topicId = shortId.generate();
+    db.get('topics').push({
+        id:topicId,
+        title:title,
+        description:description,
+        author:authorId
+    }).write();
+    res.redirect(`/page/${topicId}`);
 });
 
 router.post('/delete_process', (req, res) => {
@@ -58,22 +53,32 @@ router.post('/delete_process', (req, res) => {
         res.redirect('/');
         return false;
     }
-    db.query(`DELETE FROM topic WHERE topic.id = ?`, [req.body.id], (error, result) => {
+    var topic = db.get('topics').find({id:req.body.id}).value();
+    console.log(topic);
+    console.log(req.body);
+    if(topic.author != req.user.id){
+        req.session.save(function () {
+            req.flash('message', 'Not yours');
+            return req.session.save(function () {
+                res.redirect('/');
+            });
+        });
+    }else{
+        db.get('topics').remove({id:topic.id}).write();
         res.redirect('/');
-    });
+    }
+    
 });
 
 router.get('/update/:topicId', (req, res) => {
-    db.query('SELECT * FROM topic', function (error1, topics) {
-        if (error1) throw error1;
-        db.query('SELECT * FROM topic WHERE id = ?', [req.params.topicId], function (error2, topic) {
-            if (error2) throw error2;
-            db.query('SELECT * FROM author', (error3, authors) => {
-                var list = template.list(topics);
-                var title = topic[0].title;
-                var description = topic[0].description;
-                var tag = template.author(authors, topic[0].author_id);
-                var html = template.html(title, list, `<h2>${title}</h2>
+
+    var topics = db.get('topics').value();
+    var topic = db.get('topics').find({ id: req.params.topicId }).value();
+    var list = template.list(topics);
+    var title = topic.title;
+    var description = topic.description;
+    //var tag = template.author(authors, topic[0].author_id);
+    var html = template.html(title, list, `<h2>${title}</h2>
             <form action="/page/update_process" method='POST'>
             <p>
                <input type="text" name="title" value="${title}">
@@ -82,65 +87,54 @@ router.get('/update/:topicId', (req, res) => {
                 <textarea name="description">${description}</textarea>
             </p>
             <p>
-                <input type="hidden" name="id" value="${topic[0].id}">
+                <input type="hidden" name="id" value="${topic.id}">
             </p>
-            <p>
-                ${tag}
-            <p>
+
             <input type="submit" value="수정">
-        </form>`, ``,auth.statusUI(req,res));
-                res.send(html);
-            });
-        });
-    });
+        </form>`, ``, auth.statusUI(req, res));
+    res.send(html);
+
+
 });
 
 router.post('/update_process', (req, res) => {
-    if(!auth.isOwner(req, res)){
+    if (!auth.isOwner(req, res)) {
         res.redirect('/');
         return false;
     }
-    db.query('UPDATE topic SET title=?, description=?, author_id=? where topic.id = ?', [req.body.title, req.body.description, req.body.author, req.body.id], function (error1, result) {
-        if (error1) throw error1;
+    var topic = db.get('topics').find({ id: req.body.id }).value();
+    if (topic.author == req.user.id) {
+        db.get('topics').find({ id: req.body.id }).assign({ title: req.body.title, description: req.body.description }).write();
         res.redirect(`/page/${req.body.id}`);
-    });
+    } else {
+        req.session.save(function () {
+            req.flash('message', 'Not yours');
+            return req.session.save(function () {
+                res.redirect('/');
+            });
+        });
+    }
 });
 
 //상세 보기 페이지
 router.get('/:pageId', (req, res, next) => {
-    //console.log(req.params.pageId);
-    db.query('SELECT * FROM topic', function (error, topics) {
-        if (error) next(error);
-        db.query('SELECT * FROM topic WHERE topic.id = ?', [req.params.pageId], function (error2, topic) {
-            if (error2) next(error2);
-            try {
-                db.query('SELECT * FROM author WHERE id = ?', [topic[0].author_id], function (error3, author) {
-                    if (error3) {
-                        console.log('error3 occured!!');
-                        next(error3);
-                    }
-                    else {
-                        var description = topic[0].description;
-                        var title = topic[0].title;
-                        var list = template.list(topics);
+    var topics = db.get('topics').value();
+    var topic = db.get('topics').find({ id: req.params.pageId}).value();
+    var list = template.list(topics);
 
-                        var html = template.html(title, list, `<h2>${title}</h2>${description}<p>by ${author[0].name}</p>`, `<a href="/page/create">create</a>
-                <a href="/page/update/${topic[0].id}">update</a>
+    var title = topic.title;
+    var description = topic.description;
+    var authorId = topic.author;
+
+    var author = db.get('users').find({id:authorId}).value();
+    
+    var html = template.html(title, list, `<h2>${title}</h2>${description}<p>by ${author.displayName}</p>`, `<a href="/page/create">create</a>
+                <a href="/page/update/${topic.id}">update</a>
                 <form action="/page/delete_process" method="POST">
-                    <input type="hidden" name="id" value="${topic[0].id}">
+                    <input type="hidden" name="id" value="${topic.id}">
                     <input type="submit" value="삭제">
-                </form>`,`${auth.statusUI(req,res)}`);
-                        res.send(html);
-                    }
-                });
-            } catch (err) {
-                if (err) {
-                    console.log('err occured!!');
-                    next(err);
-                }
-            }
-        });
-    });
+                </form>`, `${auth.statusUI(req, res)}`);
+    res.send(html); 
 });
 
 module.exports = router;

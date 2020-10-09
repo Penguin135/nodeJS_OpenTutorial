@@ -3,12 +3,11 @@ var router = express.Router();
 var db = require('../lib/db');
 var template = require('../lib/template');
 var shortid = require('shortid');
-var userdb = require('../lib/userdb');
-
+var db = require('../lib/db');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 module.exports=function(passport){
     router.get('/login', (req, res) => {
-        db.query('SELECT * FROM topic', function (error, topics) {
-            if (error) throw error;
             var fmsg = req.flash();
             var message='';
             if(fmsg.message){
@@ -16,6 +15,7 @@ module.exports=function(passport){
             }
             var title = 'Login';
             var description = '';
+            var topics = db.get("topics").value();
             var list = template.list(topics);
                     var html = template.html(title, list, `<h2>${title}</h2>
                     <p>
@@ -31,10 +31,10 @@ module.exports=function(passport){
                         <input type="submit" value="로그인">
                     </form>${description}`, ``);
             res.send(html);
-        });
     });
 
     router.post('/login_process', function (req, res, next) {
+        console.log(req.body);
         passport.authenticate('local', function (err, user, info) {
             if (err) {
                 return next(err);
@@ -66,8 +66,7 @@ module.exports=function(passport){
     })
 
     router.get('/register', (req, res) => {
-        db.query('SELECT * FROM topic', function (error, topics) {
-            if (error) throw error;
+
             var fmsg = req.flash();
             var message='';
             if(fmsg.message){
@@ -75,6 +74,7 @@ module.exports=function(passport){
             }
             var title = 'Register';
             var description = '';
+            var topics = db.get('topics').value();
             var list = template.list(topics);
                     var html = template.html(title, list, `<h2>${title}</h2>
                     <p>
@@ -96,7 +96,6 @@ module.exports=function(passport){
                         <input type="submit" value="회원가입">
                     </form>${description}`, ``);
             res.send(html);
-        });
     });
 
     router.post('/register_process', (req, res) => {
@@ -114,19 +113,22 @@ module.exports=function(passport){
                 res.redirect('/auth/register');
             });
         }else{
-            var user = {
-                id:sid,
-                email:email,
-                password:pwd,
-                displayName:nickname
-            };
-            userdb.get('users').push(user).write();
-            req.login(user, function(err){
-                req.session.save(function(err){
-                    if(err) throw err;
-                    res.redirect('/');
-                })
+            bcrypt.hash(pwd, saltRounds, function(err, hash) {
+                var user = {
+                    id:sid,
+                    email:email,
+                    password:hash,
+                    displayName:nickname
+                };
+                db.get('users').push(user).write();
+                req.login(user, function(err){
+                    req.session.save(function(err){
+                        if(err) throw err;
+                        res.redirect('/');
+                    })
+                });    
             });
+            
         }
         
     });

@@ -1,5 +1,6 @@
 const db = require('./db');
-const userdb = require('./userdb');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 module.exports = function (app) {
     var passport = require('passport');
     var LocalStrategy = require('passport-local').Strategy;
@@ -15,9 +16,7 @@ module.exports = function (app) {
     });
 
     passport.deserializeUser(function (id, done) {
-        console.log('deserializeUser', id);
-        var user = userdb.get('users').find({id:id}).value();
-        console.log(user);
+        var user = db.get('users').find({id:id}).value();
         done(null, user);
     });
 
@@ -27,17 +26,24 @@ module.exports = function (app) {
             passwordField: 'pwd'
         },
         function (useremail, userpassword, done) {
-            console.log('localStrategy', useremail, userpassword);
-            var user = userdb.get('users').find({email:useremail, password:userpassword}).value();
-            //db.get('topic').find({title:'lowddb'}).value()
-            console.log('login user', user);
+            var user = db.get('users').find({email: useremail}).value();
+        
             if(user){
-                return done(null,user, {
-                    message: 'Welcom'
+                bcrypt.compare(userpassword, user.password, function(err, res){
+                    if(res){
+                        return done(null,user, {
+                            message: 'Welcom'
+                        });
+                    }else{
+                        return done(null, false, {
+                            message: 'Password is not correct'
+                        });
+                    }
                 });
+                
             }else{
                 return done(null, false, {
-                    message: 'Incorrect user info'
+                    message: 'Email is not correct'
                 });
             }
         }

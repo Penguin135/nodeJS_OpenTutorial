@@ -1,22 +1,3 @@
 {
-  "users": [
-    {
-      "id": "bkndyv-Ib",
-      "email": "rudwns@naver.com",
-      "password": "12345",
-      "displayName": "person"
-    },
-    {
-      "id": "AgrKHtGQq",
-      "email": "rudwns273@naver.com",
-      "password": "12345",
-      "displayName": "person2"
-    },
-    {
-      "id": "_SJqchA-B",
-      "email": "rudwns3@naver.com",
-      "password": "12345",
-      "displayName": "person3"
-    }
-  ]
+  "users": []
 }

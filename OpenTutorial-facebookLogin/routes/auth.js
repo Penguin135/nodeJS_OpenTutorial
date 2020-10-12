@@ -116,19 +116,34 @@ module.exports=function(passport){
             });
         }else{
             bcrypt.hash(pwd, saltRounds, function(err, hash) {
-                var user = {
-                    id:sid,
-                    email:email,
-                    password:hash,
-                    displayName:nickname
-                };
-                db.get('users').push(user).write();
-                req.login(user, function(err){
-                    req.session.save(function(err){
-                        if(err) throw err;
-                        res.redirect('/');
-                    })
-                });    
+                var puser = db.get('users').find({email:email}).value();
+                if(puser){
+                    puser.password = hash;
+                    puser.displayName = nickname;
+                    db.get('users').find({id:puser.id}).assign(puser).write();
+                    req.login(puser, function(err){
+                        req.session.save(function(err){
+                            if(err) throw err;
+                            res.redirect('/');
+                        })
+                    }); 
+                } else{
+                    var user = {
+                        id:sid,
+                        email:email,
+                        password:hash,
+                        displayName:nickname
+                    };
+                    db.get('users').push(user).write();
+                    req.login(user, function(err){
+                        req.session.save(function(err){
+                            if(err) throw err;
+                            res.redirect('/');
+                        })
+                    }); 
+                }
+                console.log('loging...');
+                   
             });
             
         }

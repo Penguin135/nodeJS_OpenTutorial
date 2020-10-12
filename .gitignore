@@ -116,4 +116,4 @@ dist
 .pnp.*
 
 # facebook credential
-./OpenTutorial-facebookLogin/config/facebook.json
+OpenTutorial-facebookLogin/config/facebook.json

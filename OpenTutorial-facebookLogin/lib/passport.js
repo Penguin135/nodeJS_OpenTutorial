@@ -1,5 +1,6 @@
 const db = require('./db');
 const bcrypt = require('bcrypt');
+const shortid = require('shortid');
 const saltRounds = 10;
 module.exports = function (app) {
     var passport = require('passport');
@@ -50,13 +51,61 @@ module.exports = function (app) {
     ));
     
     var facebookCredential = require('../config/facebook.json');
+    facebookCredential.profileFields = ['id', 'emails', 'name', 'displayName'];
     passport.use(new FacebookStrategy(facebookCredential,
       function(accessToken, refreshToken, profile, done) {
+          console.log('facebook strategy', accessToken, refreshToken, profile);
+          var email = profile.emails[0].value;
+          var user = db.get('users').find({email:email}).value();
+          if(user){
+
+          }else{
+              user = {
+                  id:shortid.generate(),
+                  email:email,
+                  displayName:profile.displayName,
+                  facekbookId:profile.id
+              }
+              db.get('users').push(user).write();
+          }
+          done(null, user);
         // User.findOrCreate(..., function(err, user) {
         //   if (err) { return done(err); }
         //   done(null, user);
         // });
       }
     ));
+
+    app.get('/auth/facebook', passport.authenticate('facebook', {
+        scope: 'email'
+    }));
+    // app.get('/auth/facebook/callback',
+    //     passport.authenticate('facebook', {
+    //         successRedirect: '/',
+    //         failureRedirect: '/auth/login'
+    //     }));
+
+    app.get('/auth/facebook/callback',function(req, res, next){
+        passport.authenticate('facebook', function(err, user, info){
+            if(err){
+                return next(err);
+            }
+            if (!user) {
+                req.session.save(function () {
+                    req.flash('message', info.message);
+                    return req.session.save(function () {
+                        res.redirect('/auth/login');
+                    });
+                });
+            }
+            req.logIn(user, function (err) {
+                if (err) { return next(err); }
+                req.session.save(function () {
+                    res.redirect('/');
+                    return;
+                });
+            });
+        })(req, res, next);
+    });
     return passport;
 }

@@ -116,5 +116,5 @@ dist
 .pnp.*
 
 # facebook credential
-.config/facebook.json
+.config/
 ./sessions/*

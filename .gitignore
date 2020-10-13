@@ -117,3 +117,6 @@ dist
 
 # facebook credential
 OpenTutorial-facebookLogin/config/facebook.json
+OpenTutorial-facebookLogin/db.json
+kakaoLogin/config/kakao.json
+kakaoLogin/db.json
